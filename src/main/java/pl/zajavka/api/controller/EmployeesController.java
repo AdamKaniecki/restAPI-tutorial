@@ -19,6 +19,7 @@ import pl.zajavka.infrastructure.database.repository.PetRepository;
 
 import java.math.BigDecimal;
 import java.net.URI;
+import java.util.List;
 
 @RestController
 @RequestMapping(EmployeesController.EMPLOYEES)
@@ -32,7 +33,20 @@ public class EmployeesController {
     //    private PetDAO petDAO;
     private PetRepository petRepository;
 
+    @GetMapping
+    public EmployeesDTO allEmployees() {
+        return EmployeesDTO.of(employeeRepository.findAll().stream()
+                .map(employeeMapper::map)
+                .toList());
 
+    }
+
+    @GetMapping(value = EMPLOYEE_ID, produces = MediaType.APPLICATION_JSON_VALUE)
+    public EmployeeDTO employeeDetailsAsJson(@PathVariable Integer employeeId){
+        return employeeRepository.findById(employeeId)
+                .map(employeeMapper::map)
+                .orElseThrow(() -> new EntityNotFoundException( "Entity not found with id: [%s]".formatted(employeeId)));
+    }
 
 
 }
