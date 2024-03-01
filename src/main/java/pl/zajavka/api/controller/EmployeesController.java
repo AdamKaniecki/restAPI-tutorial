@@ -1,6 +1,7 @@
 package pl.zajavka.api.controller;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -28,6 +29,7 @@ public class EmployeesController {
 
     public static final String EMPLOYEES = "/employees";
     public static final String EMPLOYEE_ID = "/{employeeId}";
+    private static final String EMPLOYEE_ID_RESULT = "/%s";
     private EmployeeRepository employeeRepository;
     private EmployeeMapper employeeMapper;
     //    private PetDAO petDAO;
@@ -42,11 +44,39 @@ public class EmployeesController {
     }
 
     @GetMapping(value = EMPLOYEE_ID, produces = MediaType.APPLICATION_JSON_VALUE)
-    public EmployeeDTO employeeDetailsAsJson(@PathVariable Integer employeeId){
+    public EmployeeDTO employeeDetailsAsJson(@PathVariable Integer employeeId) {
         return employeeRepository.findById(employeeId)
                 .map(employeeMapper::map)
-                .orElseThrow(() -> new EntityNotFoundException( "Entity not found with id: [%s]".formatted(employeeId)));
+                .orElseThrow(() -> new EntityNotFoundException("Entity not found with id: [%s]".formatted(employeeId)));
     }
 
+    @PostMapping
+//    ResponseEntity stosuje się by ustawić STATUS ODPOWIEDZI na ten endpoint
+    public ResponseEntity<EmployeeDTO> addEmployee(
+           @Valid @RequestBody EmployeeDTO employeeDTO
+    ) {
+        EmployeeEntity employeeEntity = EmployeeEntity.builder()
+                .name(employeeDTO.getName())
+                .surname(employeeDTO.getSurname())
+                .salary(employeeDTO.getSalary())
+                .phone(employeeDTO.getPhone())
+                .email(employeeDTO.getEmail())
+                .build();
+        EmployeeEntity employeeCreated = employeeRepository.save(employeeEntity);
+//        status created zwraca 201, i tu jest utworzony adres/path pod jakim ten zasób został utworzony
+        return ResponseEntity.created(URI.create(EMPLOYEES + EMPLOYEE_ID_RESULT.formatted(employeeCreated.getEmployeeId())))
+                .build();
+    }
 
+//curl dodający employee:
+//curl -i -H "Content-Type: application/json" -X POST http://localhost:8600/zajavka/employees -d "{\"name\": \"Nowy\",\"surname\": \"Ziomek\",\"salary\": 15322.00,\"phone\": \"+48 555 555 555\",\"email\": \"nowy@poczta.com\"}"
+
+//czyli ten kod za -d "{\#####"\} to jest wiadomość którą doklejamy do naszego żądania POST czyli
+//    w tym przypadku jest to odniesienie do:     @RequestBody EmployeeDTO employeeDTO
+
+//    jak nie napiszę nagłówka(-H "Content-Type: application/json") to dostanę odpowiedź Unsupported Mediaq Type
+//    bo Serwer nie będzie wiedział w jakim formacie to dostał i zwróci status 415- czyli status który mówi o tym
+//    że źle złożyłem zapytanie
+
+//    jeśli wprowadzimy dane niezgodne z walidacją otrzymamy BAD REQUEST
 }

@@ -36,8 +36,8 @@ public class EmployeeEntity {
     @Column(name = "phone")
     private String phone;
 
-    @OneToMany(fetch = FetchType.EAGER,mappedBy = "employee")
-    private Set<PetEntity> pets;
+//    @OneToMany(fetch = FetchType.EAGER,mappedBy = "employee")
+//    private Set<PetEntity> pets;
 
 
 
