@@ -19,6 +19,7 @@ import pl.zajavka.infrastructure.database.repository.EmployeeRepository;
 import pl.zajavka.infrastructure.database.repository.PetRepository;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.net.URI;
 import java.util.List;
 
@@ -53,7 +54,7 @@ public class EmployeesController {
     @PostMapping
 //    ResponseEntity stosuje się by ustawić STATUS ODPOWIEDZI na ten endpoint
     public ResponseEntity<EmployeeDTO> addEmployee(
-           @Valid @RequestBody EmployeeDTO employeeDTO
+            @Valid @RequestBody EmployeeDTO employeeDTO
     ) {
         EmployeeEntity employeeEntity = EmployeeEntity.builder()
                 .name(employeeDTO.getName())
@@ -79,4 +80,30 @@ public class EmployeesController {
 //    że źle złożyłem zapytanie
 
 //    jeśli wprowadzimy dane niezgodne z walidacją otrzymamy BAD REQUEST
-}
+
+
+//    trzeba ustawić ścieżkę:
+    @PutMapping(EMPLOYEE_ID)
+    public ResponseEntity<?> updateEmployee(
+        @PathVariable Integer employeeId,
+        @Valid @RequestBody  EmployeeDTO employeeDTO
+    ){
+            EmployeeEntity existingEmployee = employeeRepository.findById(employeeId)
+                    .orElseThrow(() -> new EntityNotFoundException("Not found entity for Employee with id: [%s]".formatted(employeeId)));
+       existingEmployee.setName(employeeDTO.getName());
+       existingEmployee.setSurname(employeeDTO.getSurname());
+       existingEmployee.setEmail(employeeDTO.getEmail());
+       existingEmployee.setPhone(employeeDTO.getPhone());
+       existingEmployee.setSalary(employeeDTO.getSalary());
+       employeeRepository.save(existingEmployee);
+
+       return ResponseEntity
+               .ok()
+               .build();
+        }
+
+// curl aktualizujący dane:
+// curl -i -H "Content-Type: application/json" -X PUT http://localhost:8600/zajavka/employees/25 -d "{\"name\": \"Nowy\",\"surname\": \"Ziomczyslaw\",\"salary\": 15322.00,\"phone\": \"+48 555 555 555\",\"email\": \"nowy@poczta.com\"}"
+// trzeba przekazać w ścieżce odpowiednie id
+    }
+
