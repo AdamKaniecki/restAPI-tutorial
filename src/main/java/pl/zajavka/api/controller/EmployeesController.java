@@ -22,6 +22,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping(EmployeesController.EMPLOYEES)
@@ -105,5 +106,23 @@ public class EmployeesController {
 // curl aktualizujący dane:
 // curl -i -H "Content-Type: application/json" -X PUT http://localhost:8600/zajavka/employees/25 -d "{\"name\": \"Nowy\",\"surname\": \"Ziomczyslaw\",\"salary\": 15322.00,\"phone\": \"+48 555 555 555\",\"email\": \"nowy@poczta.com\"}"
 // trzeba przekazać w ścieżce odpowiednie id
+
+@DeleteMapping(EMPLOYEE_ID)
+public ResponseEntity<?>deleteEmployee(
+        @PathVariable Integer employeeId
+){
+
+    var employeeOptional = employeeRepository.findById(employeeId);
+    if(employeeOptional.isPresent()){
+        employeeRepository.deleteById(employeeId);
+        return ResponseEntity.ok().build();
+    } else {
+        return ResponseEntity.notFound().build();
+    }
+}
+//curl na usunięcie employee:
+//curl -i -X DELETE http://localhost:8600/zajavka/employees/28
+
+
     }
 
