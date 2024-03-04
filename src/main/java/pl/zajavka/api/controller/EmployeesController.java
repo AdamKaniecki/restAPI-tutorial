@@ -112,13 +112,11 @@ public ResponseEntity<?>deleteEmployee(
         @PathVariable Integer employeeId
 ){
 
-    var employeeOptional = employeeRepository.findById(employeeId);
-    if(employeeOptional.isPresent()){
-        employeeRepository.deleteById(employeeId);
-        return ResponseEntity.ok().build();
-    } else {
-        return ResponseEntity.notFound().build();
-    }
+    EmployeeEntity existingEmployee = employeeRepository.findById(employeeId)
+            .orElseThrow(() -> new EntityNotFoundException("Not found entity for Employee with id: [%s]".formatted(employeeId)));
+employeeRepository.deleteById(existingEmployee.getEmployeeId());
+
+    return ResponseEntity.noContent().build();
 }
 //curl na usunięcie employee:
 //curl -i -X DELETE http://localhost:8600/zajavka/employees/28
