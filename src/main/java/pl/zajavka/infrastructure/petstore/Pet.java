@@ -1,4 +1,4 @@
-package pl.zajavka.infrastructure.database.petstore;
+package pl.zajavka.infrastructure.petstore;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +9,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Pet {
+//tworzę tą klasę na podstawie wybranych pól które otrzymałem w jsonie po wywołaniu metody GET na tamtym API
+public class  Pet {
     private Long id;
     private String name;
     private String status;

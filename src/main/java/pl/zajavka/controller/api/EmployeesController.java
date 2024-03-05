@@ -1,28 +1,23 @@
-package pl.zajavka.api.controller;
+package pl.zajavka.controller.api;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
-
-import pl.zajavka.api.dto.EmployeeDTO;
-import pl.zajavka.api.dto.EmployeeMapper;
-import pl.zajavka.api.dto.EmployeesDTO;
+import pl.zajavka.controller.dao.PetDAO;
+import pl.zajavka.controller.dto.EmployeeDTO;
+import pl.zajavka.controller.dto.EmployeeMapper;
+import pl.zajavka.controller.dto.EmployeesDTO;
 import pl.zajavka.infrastructure.database.entity.EmployeeEntity;
 import pl.zajavka.infrastructure.database.entity.PetEntity;
-import pl.zajavka.infrastructure.database.petstore.Pet;
 import pl.zajavka.infrastructure.database.repository.EmployeeRepository;
 import pl.zajavka.infrastructure.database.repository.PetRepository;
+import pl.zajavka.infrastructure.petstore.Pet;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.net.URI;
-import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping(EmployeesController.EMPLOYEES)
@@ -32,9 +27,10 @@ public class EmployeesController {
     public static final String EMPLOYEES = "/employees";
     public static final String EMPLOYEE_ID = "/{employeeId}";
     private static final String EMPLOYEE_ID_RESULT = "/%s";
+    private static final String EMPLOYEE_UPDATE_PET = "/{employeeId}/pet/{petId}";
     private EmployeeRepository employeeRepository;
     private EmployeeMapper employeeMapper;
-    //    private PetDAO petDAO;
+    private PetDAO petDAO;
     private PetRepository petRepository;
 
     @GetMapping
@@ -83,44 +79,70 @@ public class EmployeesController {
 //    jeśli wprowadzimy dane niezgodne z walidacją otrzymamy BAD REQUEST
 
 
-//    trzeba ustawić ścieżkę:
+    //    trzeba ustawić ścieżkę:
     @PutMapping(EMPLOYEE_ID)
     public ResponseEntity<?> updateEmployee(
-        @PathVariable Integer employeeId,
-        @Valid @RequestBody  EmployeeDTO employeeDTO
-    ){
-            EmployeeEntity existingEmployee = employeeRepository.findById(employeeId)
-                    .orElseThrow(() -> new EntityNotFoundException("Not found entity for Employee with id: [%s]".formatted(employeeId)));
-       existingEmployee.setName(employeeDTO.getName());
-       existingEmployee.setSurname(employeeDTO.getSurname());
-       existingEmployee.setEmail(employeeDTO.getEmail());
-       existingEmployee.setPhone(employeeDTO.getPhone());
-       existingEmployee.setSalary(employeeDTO.getSalary());
-       employeeRepository.save(existingEmployee);
+            @PathVariable Integer employeeId,
+            @Valid @RequestBody EmployeeDTO employeeDTO
+    ) {
+        EmployeeEntity existingEmployee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new EntityNotFoundException("Not found entity for Employee with id: [%s]".formatted(employeeId)));
+        existingEmployee.setName(employeeDTO.getName());
+        existingEmployee.setSurname(employeeDTO.getSurname());
+        existingEmployee.setEmail(employeeDTO.getEmail());
+        existingEmployee.setPhone(employeeDTO.getPhone());
+        existingEmployee.setSalary(employeeDTO.getSalary());
+        employeeRepository.save(existingEmployee);
 
-       return ResponseEntity
-               .ok()
-               .build();
-        }
+        return ResponseEntity
+                .ok()
+                .build();
+    }
 
 // curl aktualizujący dane:
 // curl -i -H "Content-Type: application/json" -X PUT http://localhost:8600/zajavka/employees/25 -d "{\"name\": \"Nowy\",\"surname\": \"Ziomczyslaw\",\"salary\": 15322.00,\"phone\": \"+48 555 555 555\",\"email\": \"nowy@poczta.com\"}"
 // trzeba przekazać w ścieżce odpowiednie id
 
-@DeleteMapping(EMPLOYEE_ID)
-public ResponseEntity<?>deleteEmployee(
-        @PathVariable Integer employeeId
-){
+    @DeleteMapping(EMPLOYEE_ID)
+    public ResponseEntity<?> deleteEmployee(
+            @PathVariable Integer employeeId
+    ) {
 
-    EmployeeEntity existingEmployee = employeeRepository.findById(employeeId)
-            .orElseThrow(() -> new EntityNotFoundException("Not found entity for Employee with id: [%s]".formatted(employeeId)));
-employeeRepository.deleteById(existingEmployee.getEmployeeId());
+        EmployeeEntity existingEmployee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new EntityNotFoundException("Not found entity for Employee with id: [%s]".formatted(employeeId)));
+        employeeRepository.deleteById(existingEmployee.getEmployeeId());
 
-    return ResponseEntity.noContent().build();
-}
+        return ResponseEntity.noContent().build();
+    }
 //curl na usunięcie employee:
 //curl -i -X DELETE http://localhost:8600/zajavka/employees/28
 
 
+    @Transactional
+    @PatchMapping(EMPLOYEE_UPDATE_PET)
+    public ResponseEntity<?> updateEmployeeWithPet(
+            @PathVariable Integer employeeId,
+            @PathVariable Integer petId
+    ){
+        EmployeeEntity existingEmployee = employeeRepository
+                .findById(employeeId)
+                .orElseThrow(() -> new EntityNotFoundException("not found entity employeeId: [%s]".formatted(employeeId)));
+        Pet petFromStore = petDAO.getPet(Long.valueOf(petId))
+                .orElseThrow(()-> new RuntimeException("Pet with id: [%s] is not exist".formatted(petId)));
+
+        PetEntity newPet = PetEntity.builder()
+                .petStorePetId(petFromStore.getId())
+                .name(petFromStore.getName())
+                .status(petFromStore.getStatus())
+                .employee(existingEmployee)
+                .build();
+        petRepository.save(newPet);
+        return ResponseEntity.ok().build();
     }
+//    curl na PATCH
+//    curl -i --location --request PATCH 'http://localhost:8600/zajavka/employees/34/pet/9'
+
+
+
+}
 
