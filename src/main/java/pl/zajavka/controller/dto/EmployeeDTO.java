@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.Set;
 
 @Data
 @Builder
@@ -24,5 +25,6 @@ public class EmployeeDTO {
     private String phone;
     @Email
     private String email;
+    private Set<PetDTO> pets;
 
 }
