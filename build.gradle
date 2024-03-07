@@ -33,11 +33,12 @@ dependencies {
 
 //db
     implementation 'org.flywaydb:flyway-core'
+    implementation 'org.jetbrains:annotations:20.1.0'
     runtimeOnly 'org.postgresql:postgresql'
 
 ////api
 
-    implementation group: 'org.springdoc', name: 'springdoc-openapi-starter-webmvc-ui', version: '2.3.0'
+    implementation group: 'org.springdoc', name: 'springdoc-openapi-starter-webmvc-ui', version: '2.0.0'
 
 //    te biblioteki muszę dodać żeby kompilował się kod po dodaniu zewnętrznego API
     implementation "org.openapitools:jackson-databind-nullable:${jacksonDatabindNullableVersion}"

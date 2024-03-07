@@ -6,32 +6,32 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import pl.zajavka.controller.dao.PetDAO;
-
+import pl.zajavka.infrastructure.petstore.api.PetApi;
 
 
 import java.util.Optional;
-
+// implementacja klasy z zewnętrznego API które otrzymałem w kontrakcie
 @Component
 @AllArgsConstructor
 public class PetClientImpl implements PetDAO {
 
-    private WebClient webClient; //- wstrzyknięty bean WebClient za pomocą Dependency Injection
-                                 // (jest zdefiniowany w klasie WebClientConfiguration)
+    private final PetApi petApi;
+    private final PetMapper petMapper;
 
+    //    nie muszę teraz nigdzie podawać endpointu dzięki generatorowi API(na podstawie kontraktu)
+    //    robię to po to by mieć większą kontrolę nad obiektami w kodzie bo jeśli dostawca zrobi aktualizację to obiekty
+    //    zmieniałyby się u mnie a tak jestem zabezpieczony
     @Override
     public Optional<Pet> getPet(Long petId) {
-    try {
-        Pet result = webClient
-                .get()// wywołuje metodę GET
-                .uri("/pet/" + petId)//podaje adres zasobu, który chce wyciągnąć
-                .retrieve()// to taki przycisk play
-                .bodyToMono(Pet.class)// -określam w formie której klasy ma być zwrócony json z tamtej aplikacji
-                .block();
-        return Optional.ofNullable(result);
+        try {
+            final var available
+                    = petApi.findPetsByStatusWithHttpInfo("available").block()
+                    .getBody();
+            return Optional.ofNullable(petApi.getPetById(petId).block())
+                    .map(petMapper::map);
+        } catch (Exception e) {
+            return Optional.empty();
+        }
     }
-    catch (Exception e){
-        return Optional.empty();
-    }
-    }
-    }
+}
 

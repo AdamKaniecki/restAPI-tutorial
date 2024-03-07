@@ -3,6 +3,11 @@ server:
   servlet:
     context-path: /zajavka
 
+#adres api z którym będę się komunikował
+api:
+  petStore:
+    url: https://petstore3.swagger.io/api/v3/
+
 spring:
   datasource:
     type: com.zaxxer.hikari.HikariDataSource

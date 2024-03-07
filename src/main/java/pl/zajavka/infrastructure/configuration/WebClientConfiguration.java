@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
@@ -12,6 +13,8 @@ import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
+import pl.zajavka.infrastructure.petstore.ApiClient;
+import pl.zajavka.infrastructure.petstore.api.PetApi;
 import reactor.netty.http.client.HttpClient;
 
 
@@ -23,19 +26,12 @@ public class WebClientConfiguration {
 
 //    dla każdego jednego API jest skonfigurowany oddzielnie jeden WebClient, gdyby nasza aplikacja komunikowała się z
 //    dwiema aplikacjami to musielibyśmy napisać dwie konfiguracje WebClienta
+    @Value("${api.petStore.url}") //adres jaki ma to API
+    private String petStoreUrl;
 
-    public static final String PET_STORE_URL = "https://petstore3.swagger.io/api/v3/";
-    public static final int TIMEOUT = 5000; // api powinno odpowiedzieć w ciągu 5 sekund a jak nie to powinno zwrocic wyjątek
-                                            // timeout Exception
+    @Bean //APIClient będzie dopisany do Springa jako bean i będzie zastępował curla czyli będzie wywoływał endpointy
+    public ApiClient petStoreApiClient(final ObjectMapper objectMapper) {
 
-    @Bean //WebClient będzie dopisany do Springa jako bean i będzie zastępował curla czyli będzie wywoływał endpointy
-    public WebClient webClient(final ObjectMapper objectMapper) {
-        final var httpClient = HttpClient.create()
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, TIMEOUT)
-                .responseTimeout(Duration.ofMillis(TIMEOUT))
-                .doOnConnected(conn ->
-                        conn.addHandlerLast(new ReadTimeoutHandler(TIMEOUT, TimeUnit.MILLISECONDS))
-                                .addHandlerLast(new WriteTimeoutHandler(TIMEOUT, TimeUnit.MILLISECONDS)));
 
 //   zamiana zarejestrowanego beana Object Mapper na format obiektów json i odwrotnie
         final var exchangeStrategies = ExchangeStrategies.builder()
@@ -58,11 +54,20 @@ public class WebClientConfiguration {
                 }).build();
 
 //        tworzenie instancji tego Web Clienta
-        return WebClient.builder()
-                .baseUrl(PET_STORE_URL)
+        final var webClient = WebClient.builder()
                 .exchangeStrategies(exchangeStrategies)
-                .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .build();
+//        tworzenie instancji API Client, bo Spring nie widzi wygenerowanych klas i podać WebClienta do środka
+        ApiClient apiClient = new ApiClient(webClient);
+        apiClient.setBasePath(petStoreUrl); //przekazanie basePath
 
+return apiClient;
     }
+
+
+    @Bean
+    public PetApi petApi (final ObjectMapper objectMapper){
+        return new PetApi(petStoreApiClient(objectMapper));
+    }
+
 }
