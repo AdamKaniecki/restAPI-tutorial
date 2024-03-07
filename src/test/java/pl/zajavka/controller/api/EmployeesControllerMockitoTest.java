@@ -44,7 +44,7 @@ class EmployeesControllerMockitoTest {
         EmployeeDTO result = employeesController.employeeDetailsAsJson(employeeId);// wywołanie tej metody z palca
 
 //        then
-        assertThat(result).isEqualTo("employeeDetails");
+        assertThat(result).isEqualTo(EmployeeDtoFixtures.someEmployeeDto1());
 
     }
 
